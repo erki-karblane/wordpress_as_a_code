@@ -70,9 +70,9 @@ When the play runs and the ec2 is created, then You need to insert "yes" to the 
 
 What was not included into the plays:
 
-#- name: Install WP CLI, create WP user and activate all plugins
+    - name: Install WP CLI, create WP user and activate all plugins
 
-"  shell: |
+    shell: |
 
     curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
 
@@ -90,14 +90,14 @@ What was not included into the plays:
 
     sudo -u {{ wp_user }} -i -- wp plugin activate --path='/var/www/{{ http_host }}/' --all
 
-"
 
- The certbot actions have been commented out as we need a proper dns for certificate creation
 
-#- name: Create and Install Cert Using apache Plugin
+    The certbot actions have been commented out as we need a proper dns for certificate creation
 
-shell: "certbot --{{ certbot_plugin }} -d {{ http_host }} -m {{ certbot_mail_address }} --agree-tos --noninteractive --redirect"
+    - name: Create and Install Cert Using apache Plugin
 
-#- name: Set Letsencrypt Cronjob for Certificate Auto Renewal
+    shell: "certbot --{{ certbot_plugin }} -d {{ http_host }} -m {{ certbot_mail_address }} --agree-tos --noninteractive --redirect"
 
-cron: name=letsencrypt_renewal special_time=monthly job="/usr/bin/certbot renew"
+    - name: Set Letsencrypt Cronjob for Certificate Auto Renewal
+
+    cron: name=letsencrypt_renewal special_time=monthly job="/usr/bin/certbot renew"
