@@ -16,6 +16,7 @@ The repository also includes a play for cleanup: remove-all.yml which will remov
 All the variables, which are used, are defined in folder group_vars, file vars.yml or in encrypted ansible vault file vault.
 
 Vars variables:
+
 		key_name: stock # name of the key, which is used for connection
 		region: eu-north-1 # region, which You want to use for ec2 provisioning
 		image: ami-01996625fff6b8fcc # ubuntu 18.04
