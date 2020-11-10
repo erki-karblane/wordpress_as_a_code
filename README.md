@@ -12,7 +12,9 @@ The following resources will be provisoned with the playbook roles:
 		wordpress - install wordpress and new plugins, removes the old ones, setups wp-config (fils is in files/wp-config.php.j2) and configures the folder and file ownership and rights
 		
 The repository also includes a play for cleanup: remove-all.yml which will remove the resources, which were created previously.
+
 All the variables, which are used, are defined in folder group_vars, file vars.yml or in encrypted ansible vault file vault.
+
 Vars variables:
 		key_name: stock # name of the key, which is used for connection
 		region: eu-north-1 # region, which You want to use for ec2 provisioning
@@ -46,10 +48,13 @@ File directory:
 		wp-config.php.j2 # wp config file, which will be used
 
 What do You need to know:
+
 Python3 is needed as the interpreter, aws credentials should be stored in
 the environment variables. You can store them in the vault, but then You
-need to change the scripts to include them as variables. All the roles,
-which run towards the ec2, are run with sudo rights. The play will not use
+need to change the scripts to include them as variables. 
+All the roles,
+which run towards the ec2, are run with sudo rights. 
+The play will not use
 default aws provisoned services (vpc, network, sg, etc).	
 
 Just a small reminder:
@@ -59,6 +64,7 @@ When the play runs and the ec2 is created, then You need to insert "yes" to the 
 
 
 What was not included into the plays:
+
 #- name: Install WP CLI, create WP user and activate all plugins
 #  shell: |
 #    curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
