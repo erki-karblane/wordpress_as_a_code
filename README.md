@@ -1,8 +1,10 @@
 # wordpress_as_a_code
 
 This repository includes playbook to make an aws based ec2 which hosts a wordpress site. 
+
 The following resources will be provisoned with the playbook roles:
-		vpc - create a vpc, subnet, IGW, route table and security group
+
+		vpc - create a new vpc, subnet, IGW, route table and security group
 		ec2 - create ec2, elastic ip and add the ip to the ansible in-memory inventory
 		updates - install and update nessessary components to run LAMP
 		apache - configures apache2 document root, virtualhost (file is in files/apache.conf.j2), enable rewrite module , new site and disable the old site
@@ -47,7 +49,8 @@ What do You need to know:
 Python3 is needed as the interpreter, aws credentials should be stored in
 the environment variables. You can store them in the vault, but then You
 need to change the scripts to include them as variables. All the roles,
-which run towards the ec2, are run with sudo rights.	
+which run towards the ec2, are run with sudo rights. The play will not use
+default aws provisoned services (vpc, network, sg, etc).	
 
 Just a small reminder:
 ansible-playbook - playbook.yml --ask-vault-pass '-e ansible_python_interpreter=/usr/bin/python3'
