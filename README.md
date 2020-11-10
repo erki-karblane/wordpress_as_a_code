@@ -70,23 +70,31 @@ When the play runs and the ec2 is created, then You need to insert "yes" to the 
 
 What was not included into the plays:
 
-/- name: Install WP CLI, create WP user and activate all plugins
+#- name: Install WP CLI, create WP user and activate all plugins
 
-/  shell: |
+"  shell: |
 
-/    curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+    curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
 
-/#    chmod +x wp-cli.phar
-/#    mv wp-cli.phar /usr/local/bin/wp
-#    sudo -u {{ wp_user }} -i -- wp plugin activate --path='/var/www/{{ http_host }}/' --all
-#    useradd -g www-data {{ wp_user }}
-#    mkdir /home/{{ wp_user }}
-#    chown -R {{ wp_user }}:www-data /home/{{ wp_user }}
-#    sudo -u {{ wp_user }} -i -- wp plugin activate --path='/var/www/{{ http_host }}/' --all
+    chmod +x wp-cli.phar
 
-# The certbot actions have been commented out as we need a proper dns for certificate creation
+    mv wp-cli.phar /usr/local/bin/wp
+
+    sudo -u {{ wp_user }} -i -- wp plugin activate --path='/var/www/{{ http_host }}/' --all
+
+    useradd -g www-data {{ wp_user }}
+
+    mkdir /home/{{ wp_user }}
+
+    chown -R {{ wp_user }}:www-data /home/{{ wp_user }}
+
+    sudo -u {{ wp_user }} -i -- wp plugin activate --path='/var/www/{{ http_host }}/' --all
+
+"
+
+ The certbot actions have been commented out as we need a proper dns for certificate creation
 #- name: Create and Install Cert Using apache Plugin
-#  shell: "certbot --{{ certbot_plugin }} -d {{ http_host }} -m {{ certbot_mail_address }} --agree-tos --noninteractive --redirect"
+shell: "certbot --{{ certbot_plugin }} -d {{ http_host }} -m {{ certbot_mail_address }} --agree-tos --noninteractive --redirect"
 
 #- name: Set Letsencrypt Cronjob for Certificate Auto Renewal
-#  cron: name=letsencrypt_renewal special_time=monthly job="/usr/bin/certbot renew"
+cron: name=letsencrypt_renewal special_time=monthly job="/usr/bin/certbot renew"
