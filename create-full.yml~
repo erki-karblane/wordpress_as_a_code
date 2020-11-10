@@ -1,0 +1,278 @@
+---
+- name: Create a new Demo EC2 instance inside a new VPC with correct routing and SG
+  hosts: localhost
+  connection: local
+  gather_facts: False  
+  vars_files:
+#    - "./group_vars/vault"   # this includes AWS credentials
+    - "./group_vars/vars.yml" # variables for the ec2 name, region, ami,etc
+
+  tasks:
+  
+    - name: create a VPC
+      amazon.aws.ec2_vpc_net:
+        name: "{{ vpc_name }}"
+        cidr_block: 10.10.0.0/16
+        region:  "{{ region }}"
+        tenancy: default
+        state: present
+        dns_support: yes
+      register: vpc
+    
+    - name: Create subnet for wordpress servers
+      amazon.aws.ec2_vpc_subnet:
+        state: present
+        vpc_id: "{{ vpc.vpc.id }}"
+        cidr: "{{ wordpress_subnet }}"
+        tags:
+          Name: wordpress subnet
+      register: subnet
+
+    - name: make an IGW for the VPC
+      community.aws.ec2_vpc_igw:
+        vpc_id:  "{{ vpc.vpc.id }}"
+        state: present
+        tags:
+          Name: wordpress IGW
+      register: igw    
+
+    - name: Set up public subnet route table
+      community.aws.ec2_vpc_route_table:
+        vpc_id:  "{{ vpc.vpc.id }}"
+        region: "{{ region }}"
+        tags:
+          Name: Public route table for wordpress
+        subnets:
+        - "{{ subnet.subnet.id }}"
+        routes:
+        - dest: 0.0.0.0/0
+          gateway_id: "{{ igw.gateway_id }}"
+
+    - name: Create security group for accessing the ec2
+      amazon.aws.ec2_group:
+        name: "{{ sg_name }}"
+        description: Wordpress EC2 group
+        vpc_id: "{{ vpc.vpc.id }}"
+        region: "{{ region }}"
+        rules:
+        - proto: tcp
+          ports: 22
+        - proto: tcp
+          ports:
+            - 80
+            - 22
+#HTTPS      - 443
+          cidr_ip: 0.0.0.0/0
+
+    - name: Provision instance(s)
+      community.aws.ec2_instance:
+        state: running  
+        key_name: "{{ key_name }}"
+        name: "{{ name }}"
+        security_group: "{{ sg_name }}"
+        network:
+          assign_public_ip: yes
+        image_id: "{{ image }}"
+        instance_type: "{{ size }}"
+        region: "{{ region }}"
+        wait: true
+        tags:
+          Environment: WordPress
+        vpc_subnet_id: "{{ subnet.subnet.id }}"
+      register: ec2_result
+   
+    - name: allocate a new elastic IP and associate it with an instance
+      community.aws.ec2_eip:
+        in_vpc: true
+        device_id: "{{ ec2_result.instances[0].instance_id }}"
+        state: present
+        release_on_disassociation: yes
+      register: eip
+ 
+    - name: Add the machine to the in-memory inventory
+      add_host:
+        hostname: "{{ eip.public_ip }}"
+        groupname: wordpress
+               
+- name: Create a wordpress site with LAMP stack and plugins
+  hosts: wordpress  # defined in the hosts file
+  gather_facts: true  
+  become: true  # we configure things as root
+  vars_files:
+    - "./group_vars/vault"   # this includes credentials for MySQL
+    - "./group_vars/vars.yml" # variables for the ec2 name, region, ami, web site, etc
+
+  tasks:
+
+    - name: Install PHP Extensions
+      apt:
+        pkg: 
+        update_cache: yes 
+        state: latest
+        pkg:
+          - apache2
+          - mysql-server
+          - php-mysql
+          - php
+          - libapache2-mod-php
+          - python3-pymysql
+          - php-xml
+          - php-xmlrpc
+          - php-mbstring
+          - php-curl
+          - php-zip
+          - php-gd
+          - php-soap
+          - php-intl
+          - unzip
+#          - python3-certbot-apache
+
+    - name: Create Apache document root
+      file:
+        path: "/var/www/{{ http_host }}"
+        state: directory
+        owner: "www-data"
+        group: "www-data"
+        mode: '0755'
+    
+
+    - name: Set up Apache VirtualHost
+      template:
+        src: "files/apache.conf.j2"
+        dest: "/etc/apache2/sites-available/{{ http_conf }}"
+      notify: Reload Apache
+    
+
+    - name: Enable rewrite module
+      shell: /usr/sbin/a2enmod rewrite
+      notify: Reload Apache
+    
+
+    - name: Enable new site
+      shell: /usr/sbin/a2ensite {{ http_conf }}
+      notify: Reload Apache
+    
+    - name: Disable default Apache site
+      shell: /usr/sbin/a2dissite 000-default.conf
+      notify: Restart Apache
+    
+  # MySQL Configuration
+# -see juba korra tehtud    - name: Set the root password
+#      mysql_user:
+#        name: root
+#        password: "{{ mysql_root_password }}"
+#        login_unix_socket: /var/run/mysqld/mysqld.sock
+    
+    - name: Remove all anonymous user accounts
+      mysql_user:
+        name: ''
+        host_all: yes
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+    
+    - name: Remove the MySQL test database
+      mysql_db:
+        name: test
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+    
+    - name: Creates database for WordPress
+      mysql_db:
+        name: "{{ mysql_db }}"
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+    
+    - name: Create MySQL user for WordPress
+      mysql_user:
+        name: "{{ mysql_user }}"
+        password: "{{ mysql_password }}"
+        priv: "{{ mysql_db }}.*:ALL"
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+    
+    - name: Download and unpack latest WordPress
+      unarchive:
+        src: https://wordpress.org/latest.tar.gz
+        dest: "/var/www/{{ http_host }}"
+        remote_src: yes
+        creates: "/var/www/{{ http_host }}/wordpress"
+     
+    - name: Install WordPress  Plugins
+      unarchive:
+        src: "{{ item.url }}"
+        dest: "{{ item.path }}"
+        remote_src: true
+      loop:
+        - {url: "https://downloads.wordpress.org/plugin/simple-history.zip",
+           path: "/var/www/{{ http_host }}/wordpress/wp-content/plugins"}
+        - {url: "https://downloads.wordpress.org/plugin/cloudimage.zip",
+           path: "/var/www/{{ http_host }}/wordpress/wp-content/plugins"}
+        - {url: "https://downloads.wordpress.org/plugin/g-business-reviews-rating.zip",
+           path: "/var/www/{{ http_host }}/wordpress/wp-content/plugins"}
+            
+    - name: Remove default WordPress plugins and themes
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      loop:
+        - {path: "/var/www/{{ http_host }}/wordpress/wp-content/plugins/akismet"}
+        - {path: "/var/www/{{ http_host }}/wordpress/wp-content/plugins/hello.php"}
+
+    - name: Install WP CLI, create WP user and activate all plugins
+      shell: |
+        curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+        chmod +x wp-cli.phar
+        sudo mv wp-cli.phar /usr/local/bin/wp
+        useradd -g www-data {{ wp_user }}
+        mkdir /home/{{ wp_user }}
+        chown -R {{ wp_user }}:www-data /home/{{ wp_user }}
+        sudo -u {{ wp_user }} -i -- wp plugin activate --path='/var/www/{{ http_host }}/wordpress/' --all
+        
+# The certbot actions have been commented out as we need a proper dns for certificate creation
+#    - name: Create and Install Cert Using apache Plugin
+#      shell: "certbot --{{ certbot_plugin }} -d {{ http_host }} -m {{ certbot_mail_address }} --agree-tos --noninteractive --redirect"
+
+#    - name: Set Letsencrypt Cronjob for Certificate Auto Renewal
+#      cron: name=letsencrypt_renewal special_time=monthly job="/usr/bin/certbot renew"
+
+    - name: Set ownership of the www
+      file:
+        path: "/var/www/{{ http_host }}"
+        state: directory
+        recurse: yes
+        owner: www-data
+        group: www-data
+ 
+    - name: Set permissions for directories
+      shell: "/usr/bin/find /var/www/{{ http_host }}/wordpress/ -type d -exec chmod 750 {} \\;"
+ 
+    - name: Set up wp-config
+      template:
+        src: "files/wp-config.php.j2"
+        dest: "/var/www/{{ http_host }}/wordpress/wp-config.php"
+
+    - name: Set permissions for files
+      shell: "/usr/bin/find /var/www/{{ http_host }}/wordpress/ -type f -exec chmod 640 {} \\;"
+ 
+    - name: Install Indek ssh key
+      ansible.posix.authorized_key:
+        state: present
+        user: ubuntu
+        key: "{{ lookup('file', '{{ pub_file }}') }}"
+           
+  handlers:
+    - name: Reload Apache
+      service:
+        name: apache2
+        state: reloaded
+
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted        
+ 
+ 
