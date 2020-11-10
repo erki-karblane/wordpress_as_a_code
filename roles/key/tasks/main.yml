@@ -1,0 +1,7 @@
+---
+# tasks file for key
+- name: Install Indek ssh key
+  ansible.posix.authorized_key:
+    state: present
+    user: ubuntu
+    key: "{{ lookup('file', '{{ pub_file }}') }}"

@@ -1,0 +1,27 @@
+---
+# tasks file for apache
+- name: Create Apache document root
+  file:
+    path: "/var/www/{{ http_host }}"
+    state: directory
+    owner: "www-data"
+    group: "www-data"
+    mode: '0755'
+
+- name: Set up Apache VirtualHost
+  template:
+    src: "files/apache.conf.j2"
+    dest: "/etc/apache2/sites-available/{{ http_conf }}"
+  notify: Reload Apache
+
+- name: Enable rewrite module
+  shell: /usr/sbin/a2enmod rewrite
+  notify: Reload Apache
+
+- name: Enable new site
+  shell: /usr/sbin/a2ensite {{ http_conf }}
+  notify: Reload Apache
+
+- name: Disable default Apache site
+  shell: /usr/sbin/a2dissite 000-default.conf
+  notify: Restart Apache

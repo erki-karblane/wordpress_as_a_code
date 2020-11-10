@@ -1,0 +1,23 @@
+---
+# tasks file for updates
+- name: Install applications and php extensions
+  apt:
+    update_cache: yes
+    state: latest
+    pkg:
+      - apache2
+      - mysql-server
+      - php-mysql
+      - php
+      - libapache2-mod-php
+      - python3-pymysql
+      - php-xml
+      - php-xmlrpc
+      - php-mbstring
+      - php-curl
+      - php-zip
+      - php-gd
+      - php-soap
+      - php-intl
+      - unzip
+#     - python3-certbot-apache

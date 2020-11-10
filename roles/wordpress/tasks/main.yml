@@ -1,0 +1,53 @@
+---
+# tasks file for wordpress
+- name: Download and unpack latest wordpress
+  unarchive:
+    src: https://wordpress.org/latest.tar.gz
+    dest: "/var/www/{{ http_host }}"
+    remote_src: yes
+#    creates: "/var/www/{{ http_host }}"
+
+- name: Move wordpress to correct directory
+  shell: |
+   mv /var/www/{{ http_host }}/wordpress/* /var/www/{{ http_host }}*
+   rm -rf /var/www/{{ http_host }}/wordpress/
+
+- name: Install wordpress  plugins
+  unarchive:
+    src: "{{ item.url }}"
+    dest: "{{ item.path }}"
+    remote_src: true
+  loop:
+    - {url: "https://downloads.wordpress.org/plugin/simple-history.zip",
+       path: "/var/www/{{ http_host }}/wp-content/plugins"}
+    - {url: "https://downloads.wordpress.org/plugin/cloudimage.zip",
+       path: "/var/www/{{ http_host }}/wp-content/plugins"}
+    - {url: "https://downloads.wordpress.org/plugin/g-business-reviews-rating.zip",
+       path: "/var/www/{{ http_host }}/wp-content/plugins"}
+
+- name: Remove default wordpress plugins and themes
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop:
+    - {path: "/var/www/{{ http_host }}/wp-content/plugins/akismet"}
+    - {path: "/var/www/{{ http_host }}/wp-content/plugins/hello.php"}
+
+- name: Set up wp-config
+  template:
+    src: "files/wp-config.php.j2"
+    dest: "/var/www/{{ http_host }}/wp-config.php"
+
+- name: Set ownership of the www
+  file:
+    path: "/var/www/{{ http_host }}"
+    state: directory
+    recurse: yes
+    owner: www-data
+    group: www-data
+
+- name: Set permissions for directories
+  shell: "/usr/bin/find /var/www/{{ http_host }}/ -type d -exec chmod 750 {} \\;"
+
+- name: Set permissions for files
+  shell: "/usr/bin/find /var/www/{{ http_host }}/ -type f -exec chmod 640 {} \\;"

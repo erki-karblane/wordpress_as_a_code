@@ -1,0 +1,58 @@
+---
+# tasks file for ec2
+- name: Provision a new ec2 instance
+  community.aws.ec2_instance:
+    state: running
+    key_name: "{{ key_name }}"
+    name: "{{ name }}"
+    security_group: "{{ sg_name }}"
+    network:
+      assign_public_ip: yes
+    image_id: "{{ image }}"
+    instance_type: "{{ size }}"
+    region: "{{ region }}"
+    wait: true
+    tags:
+      Environment: WordPress
+    vpc_subnet_id: "{{ subnet.subnet.id }}"
+  register: ec2_result
+
+
+- name: Add the newly created EC2 instance(s) to the local host group (located inside the directory)
+  lineinfile: dest="./hosts"
+                      regexp={{ item.public_ip_address }}
+                      insertafter="[wordpress]"
+                      line={{ item.public_ip_address }}
+  with_items: "{{ec2_result.instances}}"
+#  lineinfile:
+#                      dest="./hosts"
+#                      insertafter="[wordpress]" 
+#                      line={{ item.public_ip_address }}
+#  with_items: "{{ ec2_result.instances }}"
+
+#  lineinfile: dest="hosts"
+#              regexp={{ item.public_ip_address }}
+#              insertafter="[wordpress]"
+#              line={{ item.public_ip_address }}
+ # with_items: "{{ec2_result.instances[0]}}"
+
+#lineinfile: dest={{ hostpath }}
+#              regexp={{ item.public_ip }} 
+#              insertafter="[webserver]" 
+#              line="{{ item.public_ip }} {{hoststring}}"
+#              state=present
+ # with_items: "{{ec2.instances}}"
+
+
+#- name: allocate a new elastic IP and associate it with the new instance
+#  community.aws.ec2_eip:
+#    in_vpc: true
+#    device_id: "{{ ec2_result.instances[0].instance_id }}"
+#    state: present
+#    release_on_disassociation: yes
+#  register: eip
+
+#- name: Add the ec2 elastic ip to the in-memory inventory
+#  add_host:
+#    hostname: "{{ eip.public_ip }}"
+#    groupname: wordpress

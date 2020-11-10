@@ -1,0 +1,27 @@
+# Variable for setting up the AWS env
+key_name: stockholm_linux # name of the key, which is used for connection
+region: eu-north-1
+image: ami-01996625fff6b8fcc # ubuntu 18.04
+name: wordpress1 # name for the EC2 which is visible in the web console
+vpc_name: VPC for Wordpress #name for the new vpc
+sg_name: SG for Wordpress # Name for the Security Group to be used
+size: t3.small # ec2 size
+wordpress_subnet: 10.10.1.0/24 # wordpress subnet
+ansible_ssh_private_key_file: /root/stockholm_linux.pem  # key file, which ansible will use when loggin into the ec2
+ansible_user: ubuntu  # user, which ansible will use when logging into the ec2
+
+#HTTP Settings
+http_host: "your_domain" # for example www.kullakamakas.com
+http_conf: "your_domain.conf"
+http_port: "80"
+
+# wp cli user
+wp_user: vivek1 # we do not want to do the wp cli configuration as root neither www-data so we create a new user
+
+# the certbot stuff is commented out as this is not used
+#certbot_package: "python3-certbot-apache"
+#certbot_plugin: "apache"
+#certbot_mail_address: erki.karblane@gmail.com  # email in the cert
+
+# Indreku public key file
+pub_file: /root/indrek.pub # Public key which You want to upload to the newly created ec2 so that the users could connect
