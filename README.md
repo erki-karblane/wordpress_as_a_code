@@ -93,8 +93,11 @@ What was not included into the plays:
 "
 
  The certbot actions have been commented out as we need a proper dns for certificate creation
+
 #- name: Create and Install Cert Using apache Plugin
+
 shell: "certbot --{{ certbot_plugin }} -d {{ http_host }} -m {{ certbot_mail_address }} --agree-tos --noninteractive --redirect"
 
 #- name: Set Letsencrypt Cronjob for Certificate Auto Renewal
+
 cron: name=letsencrypt_renewal special_time=monthly job="/usr/bin/certbot renew"
