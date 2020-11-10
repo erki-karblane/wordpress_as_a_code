@@ -67,13 +67,17 @@ ansible-playbook - playbook.yml --ask-vault-pass '-e ansible_python_interpreter=
 When the play runs and the ec2 is created, then You need to insert "yes" to the cli, inorder to trust the connection being made towards the new ec2.
 
 
+
 What was not included into the plays:
 
 /- name: Install WP CLI, create WP user and activate all plugins
+
 /  shell: |
+
 /    curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
-#    chmod +x wp-cli.phar
-#    mv wp-cli.phar /usr/local/bin/wp
+
+/#    chmod +x wp-cli.phar
+/#    mv wp-cli.phar /usr/local/bin/wp
 #    sudo -u {{ wp_user }} -i -- wp plugin activate --path='/var/www/{{ http_host }}/' --all
 #    useradd -g www-data {{ wp_user }}
 #    mkdir /home/{{ wp_user }}
