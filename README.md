@@ -69,6 +69,10 @@ Just a small reminder:
 
 
 What was not included into the plays:
+Scripts, which install the wpi cli and activate the plugins and ssl
+certificate addon. These need to be execute after the wordpress 5 minute
+installation and need some prework, for example adding a valid dns record.
+
 
     - name: Install WP CLI, create WP user and activate all plugins
 
