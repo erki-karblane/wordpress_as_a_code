@@ -53,10 +53,10 @@ What do You need to know:
 Python3 is needed as the interpreter, aws credentials should be stored in
 the environment variables. You can store them in the vault, but then You
 need to change the scripts to include them as variables. 
-All the roles,
-which run towards the ec2, are run with sudo rights. 
-The play will not use
-default aws provisoned services (vpc, network, sg, etc).	
+All the roles,which run towards the ec2, are run with sudo rights. 
+The play will not use default aws provisoned services (vpc, network, sg, etc).	
+There is no inventory file, the playbook will add the created ec2 ip to the
+ansible in-memory inventory.
 
 Just a small reminder:
 
