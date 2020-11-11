@@ -62,7 +62,7 @@ Just a small reminder:
 
     ansible-playbook - playbook.yml --ask-vault-pass '-e ansible_python_interpreter=/usr/bin/python3'
 
-    When the play runs and the ec2 is created, then You need to insert **"yes"** to the cli, inorder to trust the connection being made towards the new ec2.
+    ** When the play runs and the ec2 is created, then You need to insert "yes" to the cli, inorder to trust the connection being made towards the new ec2.**
 
 
 What was not included into the plays:
