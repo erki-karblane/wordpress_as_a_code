@@ -10,8 +10,6 @@ The following resources will be provisoned with the playbook roles:
 		apache - configures apache2 document root, virtualhost (file is in files/apache.conf.j2), enable rewrite module , new site and disable the old site
 		mysql - configures mysql users and database, removes the unused users and db
 		wordpress - install wordpress and new plugins, removes the old ones, setups wp-config (fils is in files/wp-config.php.j2) and configures the folder and file ownership and rights
-		
-The repository also includes a play for cleanup: remove-all.yml which will remove the resources, which were created previously.
 
 All the variables, which are used, are defined in folder group_vars, file vars.yml or in encrypted ansible vault file vault.
 
@@ -64,8 +62,7 @@ Just a small reminder:
 
     ansible-playbook - playbook.yml --ask-vault-pass '-e ansible_python_interpreter=/usr/bin/python3'
 
-    When the play runs and the ec2 is created, then You need to insert "yes" to the cli, inorder to trust the connection being made towards the new ec2.
-
+    When the play runs and the ec2 is created, then You need to insert **"yes"** to the cli, inorder to trust the connection being made towards the new ec2.
 
 
 What was not included into the plays:
@@ -105,3 +102,7 @@ installation and need some prework, for example adding a valid dns record.
     - name: Set Letsencrypt Cronjob for Certificate Auto Renewal
 
     cron: name=letsencrypt_renewal special_time=monthly job="/usr/bin/certbot renew"
+
+
+
+The repository also includes a play for cleanup: **remove-all.yml** which will remove the resources, which were created previously.
